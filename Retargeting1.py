@@ -65,14 +65,23 @@ def createButton(text, color):
         newButton.SetStateColor(FBButtonState.kFBButtonState0, color)
     return newButton
     
-##    FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
-##    lPlayer = FBPlayerControl()
-##    
-##    lPlayer.
+def selBone(control, event):
+    global skelList
+    global index
+    for node in skelList:
+        node.Selected = False
+    skelList[control.ItemIndex].Selected = True
+    index = control.ItemIndex
+    
+def renameClick(control, event):
+    skelList[boneIndex].Name = textEnter.Text
 
 def stopScene(control, event):
     playback = FBPlayerControl()
     playback.Stop()
+
+skelList = []
+boneIndex = 0
     
 lBipedMap = (('Reference', 'BVH:reference'),
         ('Hips','BVH:Hips'),
@@ -137,21 +146,31 @@ def loadFiles():
     del( lFp2, lRes, FBFilePopup, FBFilePopupStyle, FBMessageBox )
      
     app.FileOpen(FBXFilename, False)
-    GremlinCharacter = FBApplication().CurrentCharacter
+    fbxCharacter = FBApplication().CurrentCharacter
     
     
     app.FileImport(BVHFilename, False)
-    MJCharacter = FBCharacter("MJ")
+    bvhCharacter = FBCharacter("MJ")
     
     for ( pslot, pjointname ) in lBipedMap:
-        addJointToCharacter(MJCharacter, pslot, pjointname)
-    MJCharacter.SetCharacterizeOn(True)
-    MJCharacter.CreateControlRig(True)
+        addJointToCharacter(bvhCharacter, pslot, pjointname)
+    bvhCharacter.SetCharacterizeOn(True)
+    bvhCharacter.CreateControlRig(True)
     
-    GremlinCharacter.InputCharacter = MJCharacter
-    GremlinCharacter.InputType = FBCharacterInputType.kFBCharacterInputCharacter
-    GremlinCharacter.ActiveInput = True
+    fbxCharacter.InputCharacter = bvhCharacter
+    fbxCharacter.InputType = FBCharacterInputType.kFBCharacterInputCharacter
+    fbxCharacter.ActiveInput = True
+
+    global skelList
+    for enum in FBBodyNodeId.values:
+        lBodyNodeId = FBBodyNodeId.values[enum]
+        model = fbxCharacter.GetModel(lBodyNodeId)
+        if (model != None):
+             if model.ClassName() == 'FBModelSkeleton':
+                skelList.append(model)
+
 loadFiles()
+
 #UI WINDOW CREATION
 tool = FBCreateUniqueTool("Retargeter")
 tool.StartSizeX = 400
@@ -189,6 +208,27 @@ restartScene = createButton("Restart Scene", None)
 vbox.Add(restartScene,50)
 restartScene.OnClick.Add(restartResponse)
 
+hbox = FBHBoxLayout( FBAttachType.kFBAttachLeft )
+
+bvhList = FBList()
+bvhList.Style = FBListStyle.kFBDropDownList
+for node in skelList:
+    bvhList.Items.append(node.Name)
+bvhList.ReadOnly = False
+bvhList.OnChange.Add(selBone)
+hbox.AddRelative(bvhList, 2.0)
+
+global textEnter
+textEnter = FBEdit()
+textEnter.Text = ""
+hbox.AddRelative(textEnter, 2.0)
+skelList[0].Selected = True
+
+renameBone = createButton("Rename Bone", None)
+renameBone.OnClick.Add(renameClick)
+hbox.AddRelative(renameBone, 1.0)
+
+
 hs = FBSlider()    
 hs.Orientation = FBOrientation.kFBHorizontal  
 hs.Caption ="frame slider"
@@ -201,6 +241,7 @@ hs.OnChange.Add(ValueChange)
 hs.OnTransaction.Add(Transaction)
 vbox.Add(hs, 30, height=5)
 
+vbox.Add(hbox, 50)
 
 
 container = FBVisualContainer()
