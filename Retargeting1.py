@@ -30,7 +30,15 @@ def restartResponse(control, event):
 def loadAllScene(control,event):
     loadFiles()
 def nextFrameRespone(control,event):
-    FBPlayerControl().GotoNextKey()
+    
+    FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
+    lPlayer = FBPlayerControl()
+    lPlayer.StepForward()
+    
+##    FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
+##    lPlayer = FBPlayerControl()
+##    
+##    lPlayer.
 
 def stopScene(control, event):
     playback = FBPlayerControl()
