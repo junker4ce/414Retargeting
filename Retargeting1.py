@@ -49,11 +49,21 @@ def restartResponse(control, event):
     
 def loadAllScene(control,event):
     loadFiles()
+
 def nextFrameRespone(control,event):
-    
     FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
     lPlayer = FBPlayerControl()
     lPlayer.StepForward()
+
+def createButton(text, color):
+    newButton = FBButton()
+    newButton.Caption = text
+    newButton.Style = FBButtonStyle.kFBPushButton
+    newButton.Justify = FBTextJustify.kFBTextJustifyCenter
+    newButton.Look = FBButtonLook.kFBLookColorChange
+    if color != None:
+        newButton.SetStateColor(FBButtonState.kFBButtonState0, color)
+    return newButton
     
 ##    FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
 ##    lPlayer = FBPlayerControl()
@@ -156,48 +166,26 @@ tool.AddRegion("main","main", x, y, w, h)
 vbox = FBVBoxLayout( FBAttachType.kFBAttachTop )
 tool.SetControl("main",vbox)
 
-PlayButton = FBButton()
-PlayButton.Caption = "Play Scene"
-PlayButton.Style = FBButtonStyle.kFB2States
-PlayButton.Look = FBButtonLook.kFBLookColorChange
-PlayButton.Justify = FBTextJustify.kFBTextJustifyCenter
-PlayButton.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.1, 0.8, 0.0))
+red = FBColor(0.8, 0.0, 0.1)
+green = FBColor(0.1, 0.8, 0.0)
+
+PlayButton = createButton("Play Scene", green)
 vbox.Add(PlayButton,50)
 PlayButton.OnClick.Add(playScene)
 
-StopButton = FBButton()
-StopButton.Caption = "Stop Scene"
-StopButton.Style = FBButtonStyle.kFB2States
-StopButton.Look = FBButtonLook.kFBLookColorChange
-StopButton.Justify = FBTextJustify.kFBTextJustifyCenter
-StopButton.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.8, 0.0, 0.1))
+StopButton = createButton("Stop Scene", red)
 vbox.Add(StopButton,50)
 StopButton.OnClick.Add(stopScene)
 
-loadAll = FBButton()
-loadAll.Caption = "Choose New Files"
-loadAll.Style = FBButtonStyle.kFB2States
-loadAll.Look = FBButtonLook.kFBLookColorChange
-loadAll.Justify = FBTextJustify.kFBTextJustifyCenter
-loadAll.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.8, 0.0, 0.1))
+loadAll = createButton("Choose New Files", None)
 vbox.Add(loadAll,50)
 loadAll.OnClick.Add(loadAllScene)
 
-nextFrame = FBButton()
-nextFrame.Caption = "Next Frame"
-nextFrame.Style = FBButtonStyle.kFB2States
-nextFrame.Look = FBButtonLook.kFBLookColorChange
-nextFrame.Justify = FBTextJustify.kFBTextJustifyCenter
-nextFrame.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.8, 0.0, 0.1))
+nextFrame = createButton("Next Frame", None)
 vbox.Add(nextFrame,50)
 nextFrame.OnClick.Add(nextFrameRespone)
 
-restartScene = FBButton()
-restartScene.Caption = "Restart Scene"
-restartScene.Style = FBButtonStyle.kFB2States
-restartScene.Look = FBButtonLook.kFBLookColorChange
-restartScene.Justify = FBTextJustify.kFBTextJustifyCenter
-restartScene.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.8, 0.0, 0.1))
+restartScene = createButton("Restart Scene", None)
 vbox.Add(restartScene,50)
 restartScene.OnClick.Add(restartResponse)
 
