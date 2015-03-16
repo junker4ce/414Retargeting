@@ -17,13 +17,21 @@ def CleanModel(objects_to_clean, node):
     for child in node.Children:
         CleanModel(objects_to_clean, child)
 
-def playScene(control, event):
+def playScene(control, event)   :
+    FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
+    lPlayer = FBPlayerControl()
+    
+    lPlayer.Play()
+def restartResponse(control, event):
     FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
     lPlayer = FBPlayerControl()
     lPlayer.GotoStart()
-    lPlayer.Play()
+    
 def loadAllScene(control,event):
     loadFiles()
+def nextFrameRespone(control,event):
+    FBPlayerControl().GotoNextKey()
+
 def stopScene(control, event):
     playback = FBPlayerControl()
     playback.Stop()
@@ -146,6 +154,24 @@ loadAll.Justify = FBTextJustify.kFBTextJustifyCenter
 loadAll.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.8, 0.0, 0.1))
 vbox.Add(loadAll,50)
 loadAll.OnClick.Add(loadAllScene)
+
+nextFrame = FBButton()
+nextFrame.Caption = "Next Frame"
+nextFrame.Style = FBButtonStyle.kFB2States
+nextFrame.Look = FBButtonLook.kFBLookColorChange
+nextFrame.Justify = FBTextJustify.kFBTextJustifyCenter
+nextFrame.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.8, 0.0, 0.1))
+vbox.Add(nextFrame,50)
+nextFrame.OnClick.Add(nextFrameRespone)
+
+restartScene = FBButton()
+restartScene.Caption = "Restart Scene"
+restartScene.Style = FBButtonStyle.kFB2States
+restartScene.Look = FBButtonLook.kFBLookColorChange
+restartScene.Justify = FBTextJustify.kFBTextJustifyCenter
+restartScene.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.8, 0.0, 0.1))
+vbox.Add(restartScene,50)
+restartScene.OnClick.Add(restartResponse)
 
 container = FBVisualContainer()
 
