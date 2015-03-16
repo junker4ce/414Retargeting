@@ -16,7 +16,27 @@ def CleanModel(objects_to_clean, node):
     objects_to_clean.append(node)
     for child in node.Children:
         CleanModel(objects_to_clean, child)
-
+def ValueChange(control,event):
+    print control.Value
+    
+def Transaction(control,event):
+    print "Transaction, is begin: ", event.IsBeginTransaction
+    if(event.IsBeginTransaction==False):
+        print control.Value
+        if(control.Value>.5):
+            i=0
+            while(i<(((control.Value)-.5)*100)):
+                  lPlayer = FBPlayerControl()
+                  lPlayer.StepForward()
+                  i+=1
+        elif(control.Value<.5):
+            i=0
+            while(i>(((control.Value)-.5)*100)):
+                  lPlayer = FBPlayerControl()
+                  lPlayer.StepBackward()
+                  i-=1
+        control.Value=.5
+            
 def playScene(control, event)   :
     FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
     lPlayer = FBPlayerControl()
@@ -180,6 +200,20 @@ restartScene.Justify = FBTextJustify.kFBTextJustifyCenter
 restartScene.SetStateColor(FBButtonState.kFBButtonState0,FBColor(0.8, 0.0, 0.1))
 vbox.Add(restartScene,50)
 restartScene.OnClick.Add(restartResponse)
+
+hs = FBSlider()    
+hs.Orientation = FBOrientation.kFBHorizontal  
+hs.Caption ="frame slider"
+hs.Style = FBButtonStyle.kFB2States
+hs.Look = FBButtonLook.kFBLookColorChange
+hs.Justify = FBTextJustify.kFBTextJustifyCenter
+hs.SmallStep = 10
+hs.LargeStep = 10 
+hs.OnChange.Add(ValueChange)
+hs.OnTransaction.Add(Transaction)
+vbox.Add(hs, 30, height=5)
+
+
 
 container = FBVisualContainer()
 
