@@ -55,6 +55,11 @@ def nextFrameRespone(control,event):
     lPlayer = FBPlayerControl()
     lPlayer.StepForward()
 
+def prevFrameRespone(control,event):
+    FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
+    lPlayer = FBPlayerControl()
+    lPlayer.StepBackward()
+
 def createButton(text, color):
     newButton = FBButton()
     newButton.Caption = text
@@ -67,18 +72,29 @@ def createButton(text, color):
     
 def selBone(control, event):
     global skelList
-    global index
+    global boneIndex
     for node in skelList:
         node.Selected = False
     skelList[control.ItemIndex].Selected = True
-    index = control.ItemIndex
+    boneIndex = control.ItemIndex
     
 def renameClick(control, event):
+    global skelList
     skelList[boneIndex].Name = textEnter.Text
+    populateList(skelList)
 
 def stopScene(control, event):
     playback = FBPlayerControl()
     playback.Stop()
+
+def populateList(skeleton):
+    global bvhList
+    bvhList.Items.removeAll()
+    for node in skeleton:
+        bvhList.Items.append(node.Name)
+    bvhList.Selected(boneIndex, True)
+
+
 
 skelList = []
 boneIndex = 0
@@ -173,8 +189,8 @@ loadFiles()
 
 #UI WINDOW CREATION
 tool = FBCreateUniqueTool("Retargeter")
-tool.StartSizeX = 400
-tool.StartSizeY = 400
+tool.StartSizeX = 600
+tool.StartSizeY = 200
 
 x = FBAddRegionParam(0,FBAttachType.kFBAttachLeft,"")
 y = FBAddRegionParam(0,FBAttachType.kFBAttachTop,"")
@@ -182,52 +198,42 @@ w = FBAddRegionParam(0,FBAttachType.kFBAttachRight,"")
 h = FBAddRegionParam(0,FBAttachType.kFBAttachBottom,"")
 tool.AddRegion("main","main", x, y, w, h)
 
-vbox = FBVBoxLayout( FBAttachType.kFBAttachTop )
-tool.SetControl("main",vbox)
-
 red = FBColor(0.8, 0.0, 0.1)
 green = FBColor(0.1, 0.8, 0.0)
 
 PlayButton = createButton("Play Scene", green)
-vbox.Add(PlayButton,50)
 PlayButton.OnClick.Add(playScene)
 
 StopButton = createButton("Stop Scene", red)
-vbox.Add(StopButton,50)
 StopButton.OnClick.Add(stopScene)
 
 loadAll = createButton("Choose New Files", None)
-vbox.Add(loadAll,50)
 loadAll.OnClick.Add(loadAllScene)
 
 nextFrame = createButton("Next Frame", None)
-vbox.Add(nextFrame,50)
 nextFrame.OnClick.Add(nextFrameRespone)
 
+prevFrame = createButton("Prev Frame", None)
+prevFrame.OnClick.Add(prevFrameRespone)
+
 restartScene = createButton("Restart Scene", None)
-vbox.Add(restartScene,50)
+#vbox.Add(restartScene,50)
 restartScene.OnClick.Add(restartResponse)
 
-hbox = FBHBoxLayout( FBAttachType.kFBAttachLeft )
-
+global bvhList 
 bvhList = FBList()
 bvhList.Style = FBListStyle.kFBDropDownList
-for node in skelList:
-    bvhList.Items.append(node.Name)
+populateList(skelList)
 bvhList.ReadOnly = False
 bvhList.OnChange.Add(selBone)
-hbox.AddRelative(bvhList, 2.0)
 
 global textEnter
 textEnter = FBEdit()
 textEnter.Text = ""
-hbox.AddRelative(textEnter, 2.0)
 skelList[0].Selected = True
 
 renameBone = createButton("Rename Bone", None)
 renameBone.OnClick.Add(renameClick)
-hbox.AddRelative(renameBone, 1.0)
-
 
 hs = FBSlider()    
 hs.Orientation = FBOrientation.kFBHorizontal  
@@ -239,13 +245,30 @@ hs.SmallStep = 10
 hs.LargeStep = 10 
 hs.OnChange.Add(ValueChange)
 hs.OnTransaction.Add(Transaction)
-vbox.Add(hs, 30, height=5)
+#vbox.Add(hs, 30, height=5)
 
-vbox.Add(hbox, 50)
+#Assembling the UI
+hbox1 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
+hbox1.AddRelative(prevFrame, 1.0)
+hbox1.AddRelative(PlayButton, 1.0)
+hbox1.AddRelative(StopButton, 1.0)
+hbox1.AddRelative(nextFrame, 1.0)
 
+hbox2 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
+hbox2.AddRelative(bvhList, 2.0)
+hbox2.AddRelative(textEnter, 2.0)
+hbox2.AddRelative(renameBone, 1.0)
 
-container = FBVisualContainer()
+window = FBVBoxLayout(FBAttachType.kFBAttachTop)
+tool.SetControl("main", window)
 
-vbox.AddRelative(container, 3.0)
+window.AddRelative(hs, 1.0)
+window.AddRelative(hbox1, 1.0)
+window.AddRelative(hbox2, 1.0)
+window.AddRelative(loadAll, 1.0)
+
+#container = FBVisualContainer()
+
+#window.AddRelative(container, 3.0)
 
 ShowTool(tool)
