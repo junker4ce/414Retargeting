@@ -1,4 +1,5 @@
 from pyfbsdk import *
+
 from pyfbsdk_additions import *
 import os
 
@@ -16,49 +17,46 @@ def CleanModel(objects_to_clean, node):
     objects_to_clean.append(node)
     for child in node.Children:
         CleanModel(objects_to_clean, child)
+
 def ValueChange(control,event):
-    print control.Value
+    print int(control.Value)
+    scenePlayer.Goto(FBTime(0, 0, 0, int(control.Value), 0))
     
 def Transaction(control,event):
     print "Transaction, is begin: ", event.IsBeginTransaction
     if(event.IsBeginTransaction==False):
-        print control.Value
-        if(control.Value>.5):
-            i=0
-            while(i<(((control.Value)-.5)*100)):
-                  lPlayer = FBPlayerControl()
-                  lPlayer.StepForward()
-                  i+=1
-        elif(control.Value<.5):
-            i=0
-            while(i>(((control.Value)-.5)*100)):
-                  lPlayer = FBPlayerControl()
-                  lPlayer.StepBackward()
-                  i-=1
-        control.Value=.5
-            
-def playScene(control, event)   :
-    FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
-    lPlayer = FBPlayerControl()
+        print int(control.Value)
+        scenePlayer.Goto(FBTime(0, 0, 0, int(control.Value), 0))
+#        if(control.Value>.5):
+#            i=0
+#            while(i<(((control.Value)-.5)*100)):
+#                  lPlayer = FBPlayerControl()
+#                  lPlayer.StepForward()
+#                  i+=1
+#        elif(control.Value<.5):
+#            i=0
+#            while(i>(((control.Value)-.5)*100)):
+#                  lPlayer = FBPlayerControl()
+#                  lPlayer.StepBackward()
+#                  i-=1
+#        control.Value=.5
+
+def playScene(control, event):
+    scenePlayer.Play()
     
-    lPlayer.Play()
 def restartResponse(control, event):
-    FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
-    lPlayer = FBPlayerControl()
-    lPlayer.GotoStart()
+    scenePlayer.GotoStart()
     
 def loadAllScene(control,event):
+    global FBXFilenames
+    FBXFilenames = []
     loadFiles()
 
 def nextFrameRespone(control,event):
-    FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
-    lPlayer = FBPlayerControl()
-    lPlayer.StepForward()
+    scenePlayer.StepForward()
 
 def prevFrameRespone(control,event):
-    FBPlayerControl().SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
-    lPlayer = FBPlayerControl()
-    lPlayer.StepBackward()
+    scenePlayer.StepBackward()
 
 def createButton(text, color):
     newButton = FBButton()
@@ -71,21 +69,32 @@ def createButton(text, color):
     return newButton
     
 def selBone(control, event):
-    global skelList
+    global modelList
     global boneIndex
     for node in skelList:
         node.Selected = False
-    skelList[control.ItemIndex].Selected = True
+    modelList[0][control.ItemIndex].Selected = True
     boneIndex = control.ItemIndex
     
 def renameClick(control, event):
-    global skelList
-    skelList[boneIndex].Name = textEnter.Text
-    populateList(skelList)
+    global modelList
+    modelList[0][boneIndex].Name = textEnter.Text
+    populateList(modelList[0])
 
 def stopScene(control, event):
-    playback = FBPlayerControl()
-    playback.Stop()
+    scenePlayer.Stop()
+
+def addModel(control, event):
+    global app, bvhCharacter
+    fbxName = fbxPopup()
+    app.FileMerge(fbxName, False)
+    fbxCharacter = FBSystem().Scene.Characters[len(FBSystem().Scene.Characters) - 1]
+
+    print 'Number of characters in scene = ', (len(FBSystem().Scene.Characters))
+
+    fbxCharacter.InputCharacter = bvhCharacter
+    fbxCharacter.InputType = FBCharacterInputType.kFBCharacterInputCharacter
+    fbxCharacter.ActiveInput = True
 
 def populateList(skeleton):
     global bvhList
@@ -94,10 +103,13 @@ def populateList(skeleton):
         bvhList.Items.append(node.Name)
     bvhList.Selected(boneIndex, True)
 
-
-
+modelList = []
 skelList = []
 boneIndex = 0
+scenePlayer = FBPlayerControl()
+FBXFilenames = []
+bvhCharacter = None
+app = None
     
 lBipedMap = (('Reference', 'BVH:reference'),
         ('Hips','BVH:Hips'),
@@ -118,14 +130,30 @@ lBipedMap = (('Reference', 'BVH:reference'),
         ( 'Neck', 'BVH:Neck'))
             
 
-def loadFiles():
+def fbxPopup():
     from pyfbsdk import FBFilePopup, FBFilePopupStyle, FBMessageBox 
-    app = FBApplication()
-    app.FileNew()
 
-    system = FBSystem()
-    scene = system.Scene
-    #POP UP FOR BVH FILE
+    lFp2 = FBFilePopup()
+    fbxName = None
+    lFp2.Caption = "Select an FBX File for the Retargeting"
+    lFp2.Style = FBFilePopupStyle.kFBFilePopupOpen
+    
+    lFp2.Filter = "*"
+    
+    # Set the default path.
+    lFp2.Path = GetMotionBuilderInstallationDirectory()+"Tutorials"
+    # Get the GUI to show.
+    lRes = lFp2.Execute()
+    # If we select files, show them, otherwise indicate that the selection was canceled
+    if lRes:
+        fbxName = lFp2.Path + "/" + lFp2.FileName
+    else:
+        FBMessageBox( "Invalid selection", "Selection canceled", "OK", None, None )
+    # Cleanup.
+    del( lFp2, lRes, FBFilePopup, FBFilePopupStyle, FBMessageBox )
+    return fbxName
+
+def loadBVH():
     lFp = FBFilePopup()
     lFp.Caption = "Select a BVH File to be Retargeted"
     lFp.Style = FBFilePopupStyle.kFBFilePopupOpen
@@ -138,41 +166,42 @@ def loadFiles():
     lRes = lFp.Execute()
     # If we select files, show them, otherwise indicate that the selection was canceled
     if lRes:
-        BVHFilename = lFp.Path + "/" + lFp.FileName
+        return lFp.Path + "/" + lFp.FileName
     else:
         FBMessageBox( "Invalid selection", "Selection canceled", "OK", None, None )
-    
+
+
+def loadFiles():
+    from pyfbsdk import FBFilePopup, FBFilePopupStyle, FBMessageBox 
+
+    global FBXFilenames, bvhCharacter, app
+
+    app = FBApplication()
+    app.FileNew()
+
+    system = FBSystem()
+    scene = system.Scene
+    #POP UP FOR BVH FILE
+
+    if (FBXFilenames == []):
+        BVHFilename = loadBVH()
     #POP UP FOR FBX FILE(automatic redirect to tutorial folder)
-    lFp2 = FBFilePopup()
-    lFp2.Caption = "Select an FBX File for the Retargeting"
-    lFp2.Style = FBFilePopupStyle.kFBFilePopupOpen
+    fbxName = fbxPopup()    
+
+    app.FileOpen(fbxName, False)            
     
-    lFp2.Filter = "*"
-    
-    # Set the default path.
-    lFp2.Path = GetMotionBuilderInstallationDirectory()+"Tutorials"
-    # Get the GUI to show.
-    lRes = lFp2.Execute()
-    # If we select files, show them, otherwise indicate that the selection was canceled
-    if lRes:
-        FBXFilename = lFp2.Path + "/" + lFp2.FileName
-    else:
-        FBMessageBox( "Invalid selection", "Selection canceled", "OK", None, None )
-    # Cleanup.
-    del( lFp2, lRes, FBFilePopup, FBFilePopupStyle, FBMessageBox )
-     
-    app.FileOpen(FBXFilename, False)
-    fbxCharacter = FBApplication().CurrentCharacter
-    
-    
+    fbxCharacter = app.CurrentCharacter
+    print fbxCharacter
+    print 'Number of characters in scene = ', (len(FBSystem().Scene.Characters))
+
     app.FileImport(BVHFilename, False)
     bvhCharacter = FBCharacter("MJ")
-    
+
     for ( pslot, pjointname ) in lBipedMap:
         addJointToCharacter(bvhCharacter, pslot, pjointname)
     bvhCharacter.SetCharacterizeOn(True)
     bvhCharacter.CreateControlRig(True)
-    
+
     fbxCharacter.InputCharacter = bvhCharacter
     fbxCharacter.InputType = FBCharacterInputType.kFBCharacterInputCharacter
     fbxCharacter.ActiveInput = True
@@ -186,6 +215,7 @@ def loadFiles():
                 skelList.append(model)
 
 loadFiles()
+scenePlayer.SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
 
 #UI WINDOW CREATION
 tool = FBCreateUniqueTool("Retargeter")
@@ -217,8 +247,10 @@ prevFrame = createButton("Prev Frame", None)
 prevFrame.OnClick.Add(prevFrameRespone)
 
 restartScene = createButton("Restart Scene", None)
-#vbox.Add(restartScene,50)
 restartScene.OnClick.Add(restartResponse)
+
+addFBX = createButton("Add Model", None)
+addFBX.OnClick.Add(addModel)
 
 global bvhList 
 bvhList = FBList()
@@ -238,13 +270,13 @@ renameBone.OnClick.Add(renameClick)
 hs = FBSlider()    
 hs.Orientation = FBOrientation.kFBHorizontal  
 hs.Caption ="frame slider"
-hs.Style = FBButtonStyle.kFB2States
-hs.Look = FBButtonLook.kFBLookColorChange
-hs.Justify = FBTextJustify.kFBTextJustifyCenter
-hs.SmallStep = 10
-hs.LargeStep = 10 
+hs.Min = scenePlayer.LoopStart.GetFrame()
+hs.Max = scenePlayer.LoopStop.GetFrame()
+#hs.SmallStep = 1
+#hs.LargeStep = 1 
 hs.OnChange.Add(ValueChange)
 hs.OnTransaction.Add(Transaction)
+hs.Value = 0
 #vbox.Add(hs, 30, height=5)
 
 #Assembling the UI
@@ -259,13 +291,17 @@ hbox2.AddRelative(bvhList, 2.0)
 hbox2.AddRelative(textEnter, 2.0)
 hbox2.AddRelative(renameBone, 1.0)
 
+hbox3 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
+hbox3.AddRelative(addFBX, 2.0)
+hbox3.AddRelative(loadAll, 1.0)
+
 window = FBVBoxLayout(FBAttachType.kFBAttachTop)
 tool.SetControl("main", window)
 
 window.AddRelative(hs, 1.0)
 window.AddRelative(hbox1, 1.0)
 window.AddRelative(hbox2, 1.0)
-window.AddRelative(loadAll, 1.0)
+window.AddRelative(hbox3, 1.0)
 
 #container = FBVisualContainer()
 
