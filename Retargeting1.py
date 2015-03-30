@@ -110,6 +110,9 @@ scenePlayer = FBPlayerControl()
 FBXFilenames = []
 bvhCharacter = None
 app = None
+snakeBVH = None
+
+
     
 lBipedMap = (('Reference', 'BVH:reference'),
         ('Hips','BVH:Hips'),
@@ -157,6 +160,7 @@ def loadBVH():
     lFp = FBFilePopup()
     lFp.Caption = "Select a BVH File to be Retargeted"
     lFp.Style = FBFilePopupStyle.kFBFilePopupOpen
+    global snakeBVH
     
     lFp.Filter = "*"
     
@@ -166,6 +170,7 @@ def loadBVH():
     lRes = lFp.Execute()
     # If we select files, show them, otherwise indicate that the selection was canceled
     if lRes:
+        snakeBVH = lFp.FileName
         return lFp.Path + "/" + lFp.FileName
     else:
         FBMessageBox( "Invalid selection", "Selection canceled", "OK", None, None )
@@ -174,7 +179,7 @@ def loadBVH():
 def loadFiles():
     from pyfbsdk import FBFilePopup, FBFilePopupStyle, FBMessageBox 
 
-    global FBXFilenames, bvhCharacter, app
+    global FBXFilenames, bvhCharacter, app, BVHFilename
 
     app = FBApplication()
     app.FileNew()
@@ -267,6 +272,13 @@ skelList[0].Selected = True
 renameBone = createButton("Rename Bone", None)
 renameBone.OnClick.Add(renameClick)
 
+if (snakeBVH=="79_54.bvh"):
+    rightFoot = FBFindModelByLabelName("BVH:RightFoot")
+    leftArm = FBFindModelByLabelName("BVH:LeftArm")
+    rightArm = FBFindModelByLabelName("BVH:RightArm")
+    rightFoot.Parent = None
+    rightArm.Parent = None
+    leftArm.Parent = None
 hs = FBSlider()    
 hs.Orientation = FBOrientation.kFBHorizontal  
 hs.Caption ="frame slider"
