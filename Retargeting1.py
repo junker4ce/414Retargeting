@@ -6,13 +6,13 @@ import os
 def GetMotionBuilderInstallationDirectory() :
     applicationPath = FBSystem().ApplicationPath
     return applicationPath[0:applicationPath.index('bin')]
-    
-def addJointToCharacter ( characterObject, slot, jointName ):    
+
+def addJointToCharacter ( characterObject, slot, jointName ):
     myJoint = FBFindModelByLabelName(jointName)
     if myJoint:
-        proplist = characterObject.PropertyList.Find(slot + "Link")    
+        proplist = characterObject.PropertyList.Find(slot + "Link")
         proplist.append (myJoint)
-    
+
 def CleanModel(objects_to_clean, node):
     objects_to_clean.append(node)
     for child in node.Children:
@@ -21,7 +21,7 @@ def CleanModel(objects_to_clean, node):
 def ValueChange(control,event):
     print int(control.Value)
     scenePlayer.Goto(FBTime(0, 0, 0, int(control.Value), 0))
-    
+
 def Transaction(control,event):
     print "Transaction, is begin: ", event.IsBeginTransaction
     if(event.IsBeginTransaction==False):
@@ -43,10 +43,20 @@ def Transaction(control,event):
 
 def playScene(control, event):
     scenePlayer.Play()
-    
+def moveLeg(control, event):
+   # leg= FBFindModelByLabelName("BVH:LeftLeg").LongName
+   #print leg
+    global bvhList
+    for comp in FBSystem().Scene.Components:
+        #print comp.LongName
+        if (comp.LongName == "BVH:LeftLeg"):
+            comp.Selected = True
+            comp.Translation = FBVector3d(10, 10, 10)
+        else:
+            comp.Selected = False
 def restartResponse(control, event):
     scenePlayer.GotoStart()
-    
+
 def loadAllScene(control,event):
     global FBXFilenames
     FBXFilenames = []
@@ -67,7 +77,7 @@ def createButton(text, color):
     if color != None:
         newButton.SetStateColor(FBButtonState.kFBButtonState0, color)
     return newButton
-    
+
 def selBone(control, event):
     global modelList
     global boneIndex
@@ -75,7 +85,7 @@ def selBone(control, event):
         node.Selected = False
     modelList[0][control.ItemIndex].Selected = True
     boneIndex = control.ItemIndex
-    
+
 def renameClick(control, event):
     global modelList
     modelList[0][boneIndex].Name = textEnter.Text
@@ -113,7 +123,7 @@ app = None
 snakeBVH = None
 
 
-    
+
 lBipedMap = (('Reference', 'BVH:reference'),
         ('Hips','BVH:Hips'),
         ( 'LeftUpLeg', 'BVH:LeftUpLeg' ),
@@ -131,18 +141,18 @@ lBipedMap = (('Reference', 'BVH:reference'),
         ( 'RightHand', 'BVH:RightHand'),
         ( 'Head', 'BVH:Head'),
         ( 'Neck', 'BVH:Neck'))
-            
+
 
 def fbxPopup():
-    from pyfbsdk import FBFilePopup, FBFilePopupStyle, FBMessageBox 
+    from pyfbsdk import FBFilePopup, FBFilePopupStyle, FBMessageBox
 
     lFp2 = FBFilePopup()
     fbxName = None
     lFp2.Caption = "Select an FBX File for the Retargeting"
     lFp2.Style = FBFilePopupStyle.kFBFilePopupOpen
-    
+
     lFp2.Filter = "*"
-    
+
     # Set the default path.
     lFp2.Path = GetMotionBuilderInstallationDirectory()+"Tutorials"
     # Get the GUI to show.
@@ -161,9 +171,9 @@ def loadBVH():
     lFp.Caption = "Select a BVH File to be Retargeted"
     lFp.Style = FBFilePopupStyle.kFBFilePopupOpen
     global snakeBVH
-    
+
     lFp.Filter = "*"
-    
+
     # Set the default path.
     lFp.Path = r"C:\Users"
     # Get the GUI to show.
@@ -177,7 +187,7 @@ def loadBVH():
 
 
 def loadFiles():
-    from pyfbsdk import FBFilePopup, FBFilePopupStyle, FBMessageBox 
+    from pyfbsdk import FBFilePopup, FBFilePopupStyle, FBMessageBox
 
     global FBXFilenames, bvhCharacter, app, BVHFilename
 
@@ -191,10 +201,10 @@ def loadFiles():
     if (FBXFilenames == []):
         BVHFilename = loadBVH()
     #POP UP FOR FBX FILE(automatic redirect to tutorial folder)
-    fbxName = fbxPopup()    
+    fbxName = fbxPopup()
 
-    app.FileOpen(fbxName, False)            
-    
+    app.FileOpen(fbxName, False)
+
     fbxCharacter = app.CurrentCharacter
     print fbxCharacter
     print 'Number of characters in scene = ', (len(FBSystem().Scene.Characters))
@@ -244,6 +254,8 @@ StopButton.OnClick.Add(stopScene)
 
 loadAll = createButton("Choose New Files", None)
 loadAll.OnClick.Add(loadAllScene)
+MoveLef = createButton("Move Leg", None)
+MoveLef.OnClick.Add(moveLeg)
 
 nextFrame = createButton("Next Frame", None)
 nextFrame.OnClick.Add(nextFrameRespone)
@@ -257,7 +269,7 @@ restartScene.OnClick.Add(restartResponse)
 addFBX = createButton("Add Model", None)
 addFBX.OnClick.Add(addModel)
 
-global bvhList 
+global bvhList
 bvhList = FBList()
 bvhList.Style = FBListStyle.kFBDropDownList
 populateList(skelList)
@@ -279,13 +291,13 @@ if (snakeBVH=="79_54.bvh"):
     rightFoot.Parent = None
     rightArm.Parent = None
     leftArm.Parent = None
-hs = FBSlider()    
-hs.Orientation = FBOrientation.kFBHorizontal  
+hs = FBSlider()
+hs.Orientation = FBOrientation.kFBHorizontal
 hs.Caption ="frame slider"
 hs.Min = scenePlayer.LoopStart.GetFrame()
 hs.Max = scenePlayer.LoopStop.GetFrame()
 #hs.SmallStep = 1
-#hs.LargeStep = 1 
+#hs.LargeStep = 1
 hs.OnChange.Add(ValueChange)
 hs.OnTransaction.Add(Transaction)
 hs.Value = 0
@@ -297,6 +309,7 @@ hbox1.AddRelative(prevFrame, 1.0)
 hbox1.AddRelative(PlayButton, 1.0)
 hbox1.AddRelative(StopButton, 1.0)
 hbox1.AddRelative(nextFrame, 1.0)
+hbox1.AddRelative(MoveLef,1.0)
 
 hbox2 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
 hbox2.AddRelative(bvhList, 2.0)
