@@ -122,6 +122,18 @@ def populateList(skeleton):
     for node in skeleton:
         bvhList.Items.append(node.Name)
     bvhList.Selected(boneIndex, True)
+    
+def addTailResponse(control, event):
+    hipRef = FBFindModelByLabelName('BVH:Hips')
+    tail = FBModelSkeleton('BVH:Tail')
+    tail.Parent = hipRef
+    tail.Show = True
+    tail.Translation = FBVector3d(0, 0, -5)
+    tail.Scaling = FBVector3d(0.5,0.5,0.5)
+    hipRef2 = FBFindModelByLabelName('BVH:Tail')
+    tail2 = FBModelSkeleton('BVH:Tail2')
+    tail2.Parent = hipRef2
+    tail2.Translation = FBVector3d(0, 1, -7)
 
 modelList = []
 skelList = []
@@ -136,6 +148,7 @@ app = None
 
 lBipedMap = (('Reference', 'BVH:reference'),
         ('Hips','BVH:Hips'),
+        ('Tail', 'BVH:Tail'),
         ( 'LeftUpLeg', 'BVH:LeftUpLeg' ),
         ( 'LeftLeg', 'BVH:LeftLeg' ),
         ( 'LeftFoot', 'BVH:LeftFoot'),
@@ -224,7 +237,11 @@ def loadFiles():
         addJointToCharacter(bvhCharacter, pslot, pjointname)
     bvhCharacter.SetCharacterizeOn(True)
     bvhCharacter.CreateControlRig(True)
-
+    
+    controlRefName = FBFindModelByLabelName('BVH:reference')
+    controlRefName.Translation = FBVector3d(0.0, 0.0, 0.0) 
+    controlRefName.Scaling = FBVector3d(6.5, 6.5, 6.5) 
+    
     fbxCharacter.InputCharacter = bvhCharacter
     fbxCharacter.InputType = FBCharacterInputType.kFBCharacterInputCharacter
     fbxCharacter.ActiveInput = True
@@ -281,6 +298,9 @@ restartScene.OnClick.Add(restartResponse)
 addFBX = createButton("Add Model", None)
 addFBX.OnClick.Add(addModel)
 
+addTail = createButton("Add Tail", None)
+addTail.OnClick.Add(addTailResponse)
+
 global bvhList
 bvhList = FBList()
 bvhList.Style = FBListStyle.kFBDropDownList
@@ -326,6 +346,7 @@ hbox3 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
 hbox3.AddRelative(addFBX, 2.0)
 hbox3.AddRelative(loadAll, 1.0)
 hbox3.AddRelative(snakeButton, 1.0)
+hbox3.AddRelative(addTail,1.0)
 
 window = FBVBoxLayout(FBAttachType.kFBAttachTop)
 tool.SetControl("main", window)
