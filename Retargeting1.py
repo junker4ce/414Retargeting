@@ -29,13 +29,10 @@ def CleanModel(objects_to_clean, node):
         CleanModel(objects_to_clean, child)
 
 def ValueChange(control,event):
-    print int(control.Value)
     scenePlayer.Goto(FBTime(0, 0, 0, int(control.Value), 0))
 
 def Transaction(control,event):
-    print "Transaction, is begin: ", event.IsBeginTransaction
     if(event.IsBeginTransaction==False):
-        print int(control.Value)
         scenePlayer.Goto(FBTime(0, 0, 0, int(control.Value), 0))
 #        if(control.Value>.5):
 #            i=0
