@@ -361,10 +361,12 @@ hbox2.AddRelative(renameBone, 1.0)
 
 hbox3 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
 hbox3.AddRelative(addFBX, 2.0)
-hbox3.AddRelative(saveScene, 1.0)
-hbox3.AddRelative(loadAll, 1.0)
 hbox3.AddRelative(snakeButton, 1.0)
 hbox3.AddRelative(addTail,1.0)
+
+hbox4 = FBHBoxLayout( FBAttachType.kFBAttachLeft)
+hbox4.AddRelative(loadAll, 1.0)
+hbox4.AddRelative(saveScene, 1.0)
 
 window = FBVBoxLayout(FBAttachType.kFBAttachTop)
 tool.SetControl("main", window)
@@ -373,6 +375,7 @@ window.AddRelative(hs, 1.0)
 window.AddRelative(hbox1, 1.0)
 window.AddRelative(hbox2, 1.0)
 window.AddRelative(hbox3, 1.0)
+window.AddRelative(hbox4, 1.0)
 
 #container = FBVisualContainer()
 
