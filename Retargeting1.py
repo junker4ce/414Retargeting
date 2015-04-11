@@ -134,6 +134,20 @@ def addTailResponse(control, event):
     tail2 = FBModelSkeleton('BVH:Tail2')
     tail2.Parent = hipRef2
     tail2.Translation = FBVector3d(0, 1, -7)
+    
+def saveResponse(control, event):
+    # Save the file using a dialog box.
+    saveDialog = FBFilePopup()
+    saveDialog.Style = FBFilePopupStyle.kFBFilePopupSave
+    saveDialog.Filter = '*'
+
+    saveDialog.Caption = 'Save the Current FBX'
+    # Set the path to the current user's My Documents.
+    saveDialog.Path = os.path.expanduser('~') + '\Documents'
+    saveDialog.FileName = 'Retarget.fbx'
+
+    if saveDialog.Execute():
+        app.FileSave(saveDialog.FullFilename)
 
 modelList = []
 skelList = []
@@ -301,6 +315,9 @@ addFBX.OnClick.Add(addModel)
 addTail = createButton("Add Tail", None)
 addTail.OnClick.Add(addTailResponse)
 
+saveScene = createButton("Save Scene", None)
+saveScene.OnClick.Add(saveResponse)
+
 global bvhList
 bvhList = FBList()
 bvhList.Style = FBListStyle.kFBDropDownList
@@ -344,6 +361,7 @@ hbox2.AddRelative(renameBone, 1.0)
 
 hbox3 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
 hbox3.AddRelative(addFBX, 2.0)
+hbox3.AddRelative(saveScene, 1.0)
 hbox3.AddRelative(loadAll, 1.0)
 hbox3.AddRelative(snakeButton, 1.0)
 hbox3.AddRelative(addTail,1.0)
