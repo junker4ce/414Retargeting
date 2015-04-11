@@ -7,6 +7,16 @@ def GetMotionBuilderInstallationDirectory() :
     applicationPath = FBSystem().ApplicationPath
     return applicationPath[0:applicationPath.index('bin')]
 
+def previewSnake(control, event):
+    loadFiles()
+    
+    rightFoot = FBFindModelByLabelName("BVH:RightFoot")
+    leftArm = FBFindModelByLabelName("BVH:LeftArm")
+    rightArm = FBFindModelByLabelName("BVH:RightArm")
+    rightFoot.Parent = None
+    rightArm.Parent = None
+    leftArm.Parent = None
+
 def addJointToCharacter ( characterObject, slot, jointName ):
     myJoint = FBFindModelByLabelName(jointName)
     if myJoint:
@@ -120,7 +130,7 @@ scenePlayer = FBPlayerControl()
 FBXFilenames = []
 bvhCharacter = None
 app = None
-snakeBVH = None
+
 
 
 
@@ -170,7 +180,6 @@ def loadBVH():
     lFp = FBFilePopup()
     lFp.Caption = "Select a BVH File to be Retargeted"
     lFp.Style = FBFilePopupStyle.kFBFilePopupOpen
-    global snakeBVH
 
     lFp.Filter = "*"
 
@@ -180,7 +189,6 @@ def loadBVH():
     lRes = lFp.Execute()
     # If we select files, show them, otherwise indicate that the selection was canceled
     if lRes:
-        snakeBVH = lFp.FileName
         return lFp.Path + "/" + lFp.FileName
     else:
         FBMessageBox( "Invalid selection", "Selection canceled", "OK", None, None )
@@ -254,6 +262,10 @@ StopButton.OnClick.Add(stopScene)
 
 loadAll = createButton("Choose New Files", None)
 loadAll.OnClick.Add(loadAllScene)
+
+snakeButton = createButton ("Snake", None)
+snakeButton.OnClick.Add(previewSnake)
+
 MoveLef = createButton("Move Leg", None)
 MoveLef.OnClick.Add(moveLeg)
 
@@ -284,13 +296,7 @@ skelList[0].Selected = True
 renameBone = createButton("Rename Bone", None)
 renameBone.OnClick.Add(renameClick)
 
-if (snakeBVH=="79_54.bvh"):
-    rightFoot = FBFindModelByLabelName("BVH:RightFoot")
-    leftArm = FBFindModelByLabelName("BVH:LeftArm")
-    rightArm = FBFindModelByLabelName("BVH:RightArm")
-    rightFoot.Parent = None
-    rightArm.Parent = None
-    leftArm.Parent = None
+
 hs = FBSlider()
 hs.Orientation = FBOrientation.kFBHorizontal
 hs.Caption ="frame slider"
@@ -319,6 +325,7 @@ hbox2.AddRelative(renameBone, 1.0)
 hbox3 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
 hbox3.AddRelative(addFBX, 2.0)
 hbox3.AddRelative(loadAll, 1.0)
+hbox3.AddRelative(snakeButton, 1.0)
 
 window = FBVBoxLayout(FBAttachType.kFBAttachTop)
 tool.SetControl("main", window)
