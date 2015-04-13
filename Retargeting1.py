@@ -37,15 +37,28 @@ def Transaction(control,event):
 
 def playScene(control, event):
     scenePlayer.Play()
+wagcnt = False
+tailadded = False
 def moveLeg(control, event):
    # leg= FBFindModelByLabelName("BVH:LeftLeg").LongName
    #print leg
     global bvhList
+    global wagcnt
     for comp in FBSystem().Scene.Components:
         #print comp.LongName
-        if (comp.LongName == "BVH:LeftLeg"):
+        if (comp.LongName == "BVH:Tail"):
             comp.Selected = True
-            comp.Translation = FBVector3d(10, 10, 10)
+            comp.Rotation.SetAnimated(True)
+            print wagcnt
+            if ( wagcnt == False):
+                comp.Rotation = FBVector3d(30, 0, 0)
+                wagcnt = True
+                
+            elif( wagcnt==True):
+                comp.Rotation = FBVector3d(-30,0,0)
+                wagcnt = False
+            
+       
         else:
             comp.Selected = False
 
@@ -116,16 +129,19 @@ def populateList(skeleton):
     bvhList.Selected(boneIndex, True)
     
 def addTailResponse(control, event):
-    hipRef = FBFindModelByLabelName('BVH:Hips')
-    tail = FBModelSkeleton('BVH:Tail')
-    tail.Parent = hipRef
-    tail.Show = True
-    tail.Translation = FBVector3d(0, 0, -5)
-    tail.Scaling = FBVector3d(0.5,0.5,0.5)
-    hipRef2 = FBFindModelByLabelName('BVH:Tail')
-    tail2 = FBModelSkeleton('BVH:Tail2')
-    tail2.Parent = hipRef2
-    tail2.Translation = FBVector3d(0, 1, -7)
+    global tailadded
+    if(tailadded==False):
+        hipRef = FBFindModelByLabelName('BVH:Hips')
+        tail = FBModelSkeleton('BVH:Tail')
+        tail.Parent = hipRef
+        tail.Show = True
+        tail.Translation = FBVector3d(0, 0, -5)
+        tail.Scaling = FBVector3d(0.5,0.5,0.5)
+        hipRef2 = FBFindModelByLabelName('BVH:Tail')
+        tail2 = FBModelSkeleton('BVH:Tail2')
+        tail2.Parent = hipRef2
+        tail2.Translation = FBVector3d(0, 1, -7)
+        tailadded=True
     
 def saveResponse(control, event):
     # Save the file using a dialog box.
@@ -290,7 +306,7 @@ loadAll.OnClick.Add(loadAllScene)
 snakeButton = createButton ("Snake", None)
 snakeButton.OnClick.Add(previewSnake)
 
-MoveLef = createButton("Move Leg", None)
+MoveLef = createButton("Wag Tail", None)
 MoveLef.OnClick.Add(moveLeg)
 
 nextFrame = createButton("Next Frame", None)
