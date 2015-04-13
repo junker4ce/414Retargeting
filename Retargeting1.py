@@ -34,19 +34,6 @@ def ValueChange(control,event):
 def Transaction(control,event):
     if(event.IsBeginTransaction==False):
         scenePlayer.Goto(FBTime(0, 0, 0, int(control.Value), 0))
-#        if(control.Value>.5):
-#            i=0
-#            while(i<(((control.Value)-.5)*100)):
-#                  lPlayer = FBPlayerControl()
-#                  lPlayer.StepForward()
-#                  i+=1
-#        elif(control.Value<.5):
-#            i=0
-#            while(i>(((control.Value)-.5)*100)):
-#                  lPlayer = FBPlayerControl()
-#                  lPlayer.StepBackward()
-#                  i-=1
-#        control.Value=.5
 
 def playScene(control, event):
     scenePlayer.Play()
@@ -61,6 +48,7 @@ def moveLeg(control, event):
             comp.Translation = FBVector3d(10, 10, 10)
         else:
             comp.Selected = False
+
 def restartResponse(control, event):
     scenePlayer.GotoStart()
 
@@ -102,7 +90,7 @@ def stopScene(control, event):
     scenePlayer.Stop()
 
 def addModel(control, event):
-    global app, bvhCharacter
+    global app, bvhCharacter, scenePlayer
     fbxName = fbxPopup()
     app.FileMerge(fbxName, False)
     fbxCharacter = FBSystem().Scene.Characters[len(FBSystem().Scene.Characters) - 1]
@@ -112,6 +100,13 @@ def addModel(control, event):
     fbxCharacter.InputCharacter = bvhCharacter
     fbxCharacter.InputType = FBCharacterInputType.kFBCharacterInputCharacter
     fbxCharacter.ActiveInput = True
+    #scenePlayer.LoopStop = sceneLength
+    scenePlayer.SetTransportFps(FPS)
+    print "The scene length will be set to " + str(sceneLength)
+    FBSystem().CurrentTake.LocalTimeSpan = FBTimeSpan(
+    FBTime(0, 0, 0, 0, 0),
+    FBTime(0, 0, 0, sceneLength, 0)
+    )
 
 def populateList(skeleton):
     global bvhList
@@ -151,10 +146,10 @@ skelList = []
 boneIndex = 0
 scenePlayer = FBPlayerControl()
 FBXFilenames = []
+global sceneLength
 bvhCharacter = None
 app = None
-
-
+FPS = FBTimeMode
 
 
 lBipedMap = (('Reference', 'BVH:reference'),
@@ -266,7 +261,8 @@ def loadFiles():
                 skelList.append(model)
 
 loadFiles()
-scenePlayer.SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
+FPS = FBPlayerControl().GetTransportFps()
+#scenePlayer.SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
 
 #UI WINDOW CREATION
 tool = FBCreateUniqueTool("Retargeter")
@@ -315,29 +311,14 @@ addTail.OnClick.Add(addTailResponse)
 saveScene = createButton("Save Scene", None)
 saveScene.OnClick.Add(saveResponse)
 
-global bvhList
-bvhList = FBList()
-bvhList.Style = FBListStyle.kFBDropDownList
-populateList(skelList)
-bvhList.ReadOnly = False
-bvhList.OnChange.Add(selBone)
-
-global textEnter
-textEnter = FBEdit()
-textEnter.Text = ""
-skelList[0].Selected = True
-
-renameBone = createButton("Rename Bone", None)
-renameBone.OnClick.Add(renameClick)
-
-
 hs = FBSlider()
 hs.Orientation = FBOrientation.kFBHorizontal
 hs.Caption ="frame slider"
 hs.Min = scenePlayer.LoopStart.GetFrame()
 hs.Max = scenePlayer.LoopStop.GetFrame()
-#hs.SmallStep = 1
-#hs.LargeStep = 1
+global sceneLength
+sceneLength = scenePlayer.LoopStop.GetFrame()
+
 hs.OnChange.Add(ValueChange)
 hs.OnTransaction.Add(Transaction)
 hs.Value = 0
@@ -350,11 +331,6 @@ hbox1.AddRelative(PlayButton, 1.0)
 hbox1.AddRelative(StopButton, 1.0)
 hbox1.AddRelative(nextFrame, 1.0)
 hbox1.AddRelative(MoveLef,1.0)
-
-hbox2 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
-hbox2.AddRelative(bvhList, 2.0)
-hbox2.AddRelative(textEnter, 2.0)
-hbox2.AddRelative(renameBone, 1.0)
 
 hbox3 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
 hbox3.AddRelative(addFBX, 2.0)
@@ -370,12 +346,12 @@ tool.SetControl("main", window)
 
 window.AddRelative(hs, 1.0)
 window.AddRelative(hbox1, 1.0)
-window.AddRelative(hbox2, 1.0)
 window.AddRelative(hbox3, 1.0)
 window.AddRelative(hbox4, 1.0)
 
 #container = FBVisualContainer()
 
 #window.AddRelative(container, 3.0)
+
 
 ShowTool(tool)
