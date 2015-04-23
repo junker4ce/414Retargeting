@@ -5,21 +5,21 @@ import os
 
 #Define the function to create the character to characterize the model to
 def addJointsToCharacter(control, event):
-	global skelList, characterize
-	allNodes = FBSystem().Scene.Components
-	lCharacter = FBCharacter("newChar")
-	#for each joint in the predetrmined joint array add the joint
+    global skelList, characterize
+    allNodes = FBSystem().Scene.Components
+    lCharacter = FBCharacter("newChar")
+    #for each joint in the predetrmined joint array add the joint
     for item in characterize:
-		for lComponent in allNodes:
-			if lComponent.Name == item:
-				myJoint = lComponent
-				myJoint.Selected = True
-				property = lCharacter.PropertyList.Find(item + "Link")
-				property.append (myJoint)
-				print property.Name
-				print item
-				print lCharacter.Name
-	lCharacter.SetCharacterizeOn(True)
+        for lComponent in allNodes:
+            if lComponent.Name == item:
+                myJoint = lComponent
+                myJoint.Selected = True
+                property = lCharacter.PropertyList.Find(item + "Link")
+                property.append (myJoint)
+                print property.Name
+                print item
+                print lCharacter.Name
+    lCharacter.SetCharacterizeOn(True)
 
 #Function definition for creating a button in the UI
 def createButton(text, color):

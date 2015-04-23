@@ -119,7 +119,6 @@ def addModel(control, event):
     fbxCharacter.InputType = FBCharacterInputType.kFBCharacterInputCharacter
     fbxCharacter.ActiveInput = True
     #scenePlayer.LoopStop = sceneLength
-    #spacing
     scenePlayer.SetTransportFps(FPS)
     print "The scene length will be set to " + str(sceneLength)
     FBSystem().CurrentTake.LocalTimeSpan = FBTimeSpan(
@@ -168,11 +167,10 @@ skelList = []
 boneIndex = 0
 scenePlayer = FBPlayerControl()
 FBXFilenames = []
-global sceneLength
+sceneLength = 0
 bvhCharacter = None
 app = None
 FPS = FBTimeMode
-
 
 lBipedMap = (('Reference', 'BVH:reference'),
         ('Hips','BVH:Hips'),
@@ -283,6 +281,7 @@ def loadFiles():
                 skelList.append(model)
 
 loadFiles()
+global sceneLength
 FPS = FBPlayerControl().GetTransportFps()
 #scenePlayer.SetTransportFps(FBTimeMode.kFBTimeMode60Frames)
 
@@ -338,13 +337,11 @@ hs.Orientation = FBOrientation.kFBHorizontal
 hs.Caption ="frame slider"
 hs.Min = scenePlayer.LoopStart.GetFrame()
 hs.Max = scenePlayer.LoopStop.GetFrame()
-global sceneLength
 sceneLength = scenePlayer.LoopStop.GetFrame()
 
 hs.OnChange.Add(ValueChange)
 hs.OnTransaction.Add(Transaction)
 hs.Value = 0
-#vbox.Add(hs, 30, height=5)
 
 #Assembling the UI
 hbox1 = FBHBoxLayout( FBAttachType.kFBAttachLeft )
@@ -370,10 +367,5 @@ window.AddRelative(hs, 1.0)
 window.AddRelative(hbox1, 1.0)
 window.AddRelative(hbox3, 1.0)
 window.AddRelative(hbox4, 1.0)
-
-#container = FBVisualContainer()
-
-#window.AddRelative(container, 3.0)
-
 
 ShowTool(tool)
