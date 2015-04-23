@@ -8,11 +8,13 @@ def GetMotionBuilderInstallationDirectory() :
     return applicationPath[0:applicationPath.index('bin')]
 
 def previewSnake(control, event):
+    # load fbx and bvh files
     loadFiles()
-    
+    #find right foot, left arm and right arm in bvh refernce
     rightFoot = FBFindModelByLabelName("BVH:RightFoot")
     leftArm = FBFindModelByLabelName("BVH:LeftArm")
     rightArm = FBFindModelByLabelName("BVH:RightArm")
+    #unparent the above limbs, to remove their animation
     rightFoot.Parent = None
     rightArm.Parent = None
     leftArm.Parent = None
@@ -104,16 +106,20 @@ def stopScene(control, event):
 
 def addModel(control, event):
     global app, bvhCharacter, scenePlayer
+    #prompt to choose new fbx file
     fbxName = fbxPopup()
+    #load the character into the scene
     app.FileMerge(fbxName, False)
+    # get the last loaded character
     fbxCharacter = FBSystem().Scene.Characters[len(FBSystem().Scene.Characters) - 1]
 
     print 'Number of characters in scene = ', (len(FBSystem().Scene.Characters))
-
+    #retarget the actual motion to the new character
     fbxCharacter.InputCharacter = bvhCharacter
     fbxCharacter.InputType = FBCharacterInputType.kFBCharacterInputCharacter
     fbxCharacter.ActiveInput = True
     #scenePlayer.LoopStop = sceneLength
+    #spacing
     scenePlayer.SetTransportFps(FPS)
     print "The scene length will be set to " + str(sceneLength)
     FBSystem().CurrentTake.LocalTimeSpan = FBTimeSpan(
