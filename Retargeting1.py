@@ -9,21 +9,27 @@ def GetMotionBuilderInstallationDirectory() :
 
 def previewSnake(control, event):
     # load fbx and bvh files
-    loadFiles()
+    loadSnakeFiles()
     #find right foot, left arm and right arm in bvh refernce
-    rightFoot = FBFindModelByLabelName("BVH:RightFoot")
+    rightUpLeg = FBFindModelByLabelName("BVH:RightUpLeg")
     leftArm = FBFindModelByLabelName("BVH:LeftArm")
     rightArm = FBFindModelByLabelName("BVH:RightArm")
     #unparent the above limbs, to remove their animation
-    rightFoot.Parent = None
+    rightUpLeg.Parent = None
     rightArm.Parent = None
     leftArm.Parent = None
 
-def addJointToCharacter ( characterObject, slot, jointName ):
+def addJointToCharacter (characterObject, slot, jointName):
     myJoint = FBFindModelByLabelName(jointName)
     if myJoint:
         proplist = characterObject.PropertyList.Find(slot + "Link")
-        proplist.append (myJoint)
+        proplist.append(myJoint)
+
+def removeJointFromCharacter(characterObject, slot, jointName):
+    myJoint = FBFindModelByLabelName(jointName)
+    if myJoint:
+        proplist = characterObject.PropertyList.Find(slot + "Link")
+        proplist.remove(myJoint)
 
 def CleanModel(objects_to_clean, node):
     objects_to_clean.append(node)
@@ -39,8 +45,10 @@ def Transaction(control,event):
 
 def playScene(control, event):
     scenePlayer.Play()
+
 wagcnt = False
 tailadded = False
+
 def moveLeg(control, event):
    # leg= FBFindModelByLabelName("BVH:LeftLeg").LongName
    #print leg
@@ -87,14 +95,6 @@ def createButton(text, color):
     if color != None:
         newButton.SetStateColor(FBButtonState.kFBButtonState0, color)
     return newButton
-
-def selBone(control, event):
-    global modelList
-    global boneIndex
-    for node in skelList:
-        node.Selected = False
-    modelList[0][control.ItemIndex].Selected = True
-    boneIndex = control.ItemIndex
 
 def renameClick(control, event):
     global modelList
@@ -162,8 +162,6 @@ def saveResponse(control, event):
     if saveDialog.Execute():
         app.FileSave(saveDialog.FullFilename)
 
-modelList = []
-skelList = []
 boneIndex = 0
 scenePlayer = FBPlayerControl()
 FBXFilenames = []
@@ -190,6 +188,16 @@ lBipedMap = (('Reference', 'BVH:reference'),
         ( 'RightHand', 'BVH:RightHand'),
         ( 'Head', 'BVH:Head'),
         ( 'Neck', 'BVH:Neck'))
+
+lSnakeRemover = ( ( 'RightUpLeg', 'BVH:RightUpLeg'),
+        ( 'RightLeg', 'BVH:RightLeg'),
+        ( 'RightFoot', 'BVH:RightFoot'),
+        ( 'LeftArm', 'BVH:LeftArm'),
+        ( 'LeftForeArm', 'BVH:LeftForeArm'),
+        ( 'LeftHand', 'BVH:LeftHand'),
+        ( 'RightArm', 'BVH:RightArm'),
+        ( 'RightForeArm', 'BVH:RightForeArm'),
+        ( 'RightHand', 'BVH:RightHand'))
 
 
 def fbxPopup():
@@ -272,13 +280,48 @@ def loadFiles():
     fbxCharacter.InputType = FBCharacterInputType.kFBCharacterInputCharacter
     fbxCharacter.ActiveInput = True
 
-    global skelList
-    for enum in FBBodyNodeId.values:
-        lBodyNodeId = FBBodyNodeId.values[enum]
-        model = fbxCharacter.GetModel(lBodyNodeId)
-        if (model != None):
-             if model.ClassName() == 'FBModelSkeleton':
-                skelList.append(model)
+def loadSnakeFiles(control, event):
+    from pyfbsdk import FBFilePopup, FBFilePopupStyle, FBMessageBox
+
+    global FBXFilenames, bvhCharacter, app, BVHFilename
+
+    app = FBApplication()
+    app.FileNew()
+
+    system = FBSystem()
+    scene = system.Scene
+    #POP UP FOR BVH FILE
+
+    if (FBXFilenames == []):
+        BVHFilename = loadBVH()
+    #POP UP FOR FBX FILE(automatic redirect to tutorial folder)
+    fbxName = fbxPopup()
+
+    app.FileOpen(fbxName, False)
+
+    fbxCharacter = app.CurrentCharacter
+    print fbxCharacter
+    print 'Number of characters in scene = ', (len(FBSystem().Scene.Characters))
+
+    app.FileImport(BVHFilename, False)
+    bvhCharacter = FBCharacter("MJ")
+
+    for ( pslot, pjointname ) in lBipedMap:
+        addJointToCharacter(bvhCharacter, pslot, pjointname)
+    bvhCharacter.SetCharacterizeOn(True)
+    bvhCharacter.CreateControlRig(True)
+
+    controlRefName = FBFindModelByLabelName('BVH:reference')
+    controlRefName.Translation = FBVector3d(0.0, 0.0, 0.0) 
+    controlRefName.Scaling = FBVector3d(6.5, 6.5, 6.5) 
+
+    for ( pslot, pjointname ) in lSnakeRemover:
+        removeJointFromCharacter(bvhCharacter, pslot, pjointname)
+
+    fbxCharacter.InputCharacter = bvhCharacter
+    fbxCharacter.InputType = FBCharacterInputType.kFBCharacterInputCharacter
+    fbxCharacter.ActiveInput = True
+
 
 loadFiles()
 global sceneLength
@@ -309,7 +352,7 @@ loadAll = createButton("Choose New Files", None)
 loadAll.OnClick.Add(loadAllScene)
 
 snakeButton = createButton ("Snake", None)
-snakeButton.OnClick.Add(previewSnake)
+snakeButton.OnClick.Add(loadSnakeFiles)
 
 MoveLef = createButton("Wag Tail", None)
 MoveLef.OnClick.Add(moveLeg)
